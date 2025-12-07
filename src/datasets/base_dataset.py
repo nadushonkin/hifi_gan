@@ -3,7 +3,11 @@ import random
 from typing import List
 
 import torch
+import torch.nn.functional as F
+import torchaudio
 from torch.utils.data import Dataset
+from src.utils import MelSpectrogram, MelSpectrogramConfig
+import random
 
 logger = logging.getLogger(__name__)
 
@@ -34,6 +38,9 @@ class BaseDataset(Dataset):
                 tensor name.
         """
         self._assert_index_is_valid(index)
+        config = MelSpectrogramConfig()
+        self.make_mel = MelSpectrogram(config)
+        self.audio_size = 8192
 
         index = self._shuffle_and_limit_index(index, limit, shuffle_index)
         self._index: List[dict] = index
@@ -56,11 +63,25 @@ class BaseDataset(Dataset):
                 (a single dataset element).
         """
         data_dict = self._index[ind]
-        data_path = data_dict["path"]
-        data_object = self.load_object(data_path)
-        data_label = data_dict["label"]
+        audio = self.load_audio(data_dict['path']).squeeze()
+        current_size = audio.shape[0]
+        target_size = self.audio_size
 
-        instance_data = {"data_object": data_object, "labels": data_label}
+        if current_size > target_size:
+            limit = current_size - target_size
+            start_point = random.randint(0, limit)
+            
+            processed_audio = audio.narrow(dim=0, start=start_point, length=target_size)
+            
+        else:
+            pad_amount = target_size - current_size
+            
+            zero_padding = torch.zeros(pad_amount, dtype=audio.dtype, device=audio.device)
+            processed_audio = torch.cat((audio, zero_padding), dim=0)
+
+        mel = self.make_mel(processed_audio)
+
+        instance_data = {"audio": processed_audio, "mel": mel}
         instance_data = self.preprocess_data(instance_data)
 
         return instance_data
@@ -71,17 +92,30 @@ class BaseDataset(Dataset):
         """
         return len(self._index)
 
-    def load_object(self, path):
+    def load_audio(self, path):
         """
-        Load object from disk.
+        Load audio from disk.
 
         Args:
-            path (str): path to the object.
+            path (str): path to the audio.
         Returns:
-            data_object (Tensor):
+            processed_audio (Tensor):
         """
-        data_object = torch.load(path)
-        return data_object
+        waveform, current_sr = torchaudio.load(path)
+        destination_sr = 22050
+
+        mono_waveform = waveform.select(0, 0).unsqueeze(0)
+
+        if current_sr != destination_sr:
+            resampler = torchaudio.transforms.Resample(
+                orig_freq=current_sr, 
+                new_freq=destination_sr
+            )
+            processed_audio = resampler(mono_waveform)
+        else:
+            processed_audio = mono_waveform
+            
+        return processed_audio
 
     def preprocess_data(self, instance_data):
         """
@@ -141,10 +175,6 @@ class BaseDataset(Dataset):
         for entry in index:
             assert "path" in entry, (
                 "Each dataset item should include field 'path'" " - path to audio file."
-            )
-            assert "label" in entry, (
-                "Each dataset item should include field 'label'"
-                " - object ground-truth label."
             )
 
     @staticmethod

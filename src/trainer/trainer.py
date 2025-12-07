@@ -32,20 +32,40 @@ class Trainer(BaseTrainer):
         metric_funcs = self.metrics["inference"]
         if self.is_train:
             metric_funcs = self.metrics["train"]
-            self.optimizer.zero_grad()
+            self.disc_optimizer.zero_grad()
+            self.gen_optimizer.zero_grad()
 
-        outputs = self.model(**batch)
-        batch.update(outputs)
+        gen_results = self.generator(**batch)
+        batch.update(gen_results)
 
-        all_losses = self.criterion(**batch)
-        batch.update(all_losses)
+        fake_mel_updates = {'fake_mel': self.make_mel(batch['fake'].squeeze(1))}
+        batch.update(fake_mel_updates)
+
+        mpd_d_pass = self.mpd(**batch, detach=True)
+        batch.update(mpd_d_pass)
+        msd_d_pass = self.msd(**batch, detach=True)
+        batch.update(msd_d_pass)
+
+        disc_losses = self.disc_loss(**batch)
+        batch.update(disc_losses)
 
         if self.is_train:
-            batch["loss"].backward()  # sum of all losses is always called loss
+            batch["disc_loss"].backward()
             self._clip_grad_norm()
-            self.optimizer.step()
-            if self.lr_scheduler is not None:
-                self.lr_scheduler.step()
+            self.disc_optimizer.step()
+
+        mpd_g_pass = self.mpd(**batch, detach=False)
+        batch.update(mpd_g_pass)
+        msd_g_pass = self.msd(**batch, detach=False)
+        batch.update(msd_g_pass)
+
+        gen_losses = self.gen_loss(**batch)
+        batch.update(gen_losses)
+        
+        if self.is_train:
+            batch["gen_loss"].backward()
+            self._clip_grad_norm()
+            self.gen_optimizer.step()
 
         # update metrics for each loss (in case of multiple losses)
         for loss_name in self.config.writer.loss_names:
@@ -68,12 +88,9 @@ class Trainer(BaseTrainer):
                 rules to apply.
         """
         # method to log data from you batch
-        # such as audio, text or images, for example
+        
+        self.writer.add_audio("fake_audio", batch['fake'][0], 22050)
+        self.writer.add_audio("real_audio", batch['real'][0], 22050)
+        self.writer.add_image("fake_mel", batch['fake_mel'][0].T)
+        self.writer.add_image("real_mel", batch['real_mel'][0].T)
 
-        # logging scheme might be different for different partitions
-        if mode == "train":  # the method is called only every self.log_step steps
-            # Log Stuff
-            pass
-        else:
-            # Log Stuff
-            pass

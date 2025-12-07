@@ -38,28 +38,43 @@ def main(config):
     dataloaders, batch_transforms = get_dataloaders(config, device)
 
     # build model architecture, then print to console
-    model = instantiate(config.model).to(device)
-    logger.info(model)
+    generator = instantiate(config.generator).to(device)
+    msd = instantiate(config.msd).to(device)
+    mpd = instantiate(config.mpd).to(device)
 
     # get function handles of loss and metrics
-    loss_function = instantiate(config.loss_function).to(device)
+    gen_loss = instantiate(config.gen_loss).to(device)
+    disc_loss = instantiate(config.disc_loss).to(device)
     metrics = instantiate(config.metrics)
 
     # build optimizer, learning rate scheduler
-    trainable_params = filter(lambda p: p.requires_grad, model.parameters())
-    optimizer = instantiate(config.optimizer, params=trainable_params)
-    lr_scheduler = instantiate(config.lr_scheduler, optimizer=optimizer)
+    adamw_betas = (0.8, 0.99)
+
+    g_trainable_params = list(filter(lambda p: p.requires_grad, generator.parameters()))
+    gen_optimizer = instantiate(config.gen_optimizer, params=g_trainable_params, betas=adamw_betas)
+    gen_lr_scheduler = instantiate(config.gen_lr_scheduler, optimizer=gen_optimizer)
+
+    d_all_params = list(msd.parameters()) + list(mpd.parameters())
+    d_trainable_params = list(filter(lambda p: p.requires_grad, d_all_params))
+
+    disc_optimizer = instantiate(config.disc_optimizer, params=d_trainable_params, betas=adamw_betas)
+    disc_lr_scheduler = instantiate(config.disc_lr_scheduler, optimizer=disc_optimizer)
 
     # epoch_len = number of iterations for iteration-based training
     # epoch_len = None or len(dataloader) for epoch-based training
     epoch_len = config.trainer.get("epoch_len")
 
     trainer = Trainer(
-        model=model,
-        criterion=loss_function,
+        generator=generator,
+        msd=msd,
+        mpd=mpd,
+        generator_loss=gen_loss,
+        discriminator_loss=disc_loss,
         metrics=metrics,
-        optimizer=optimizer,
-        lr_scheduler=lr_scheduler,
+        gen_optimizer=gen_optimizer,
+        disc_optimizer=disc_optimizer,
+        gen_lr_scheduler=gen_lr_scheduler,
+        disc_lr_scheduler=disc_lr_scheduler,
         config=config,
         device=device,
         dataloaders=dataloaders,

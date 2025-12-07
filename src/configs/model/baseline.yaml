@@ -1,4 +1,6 @@
-_target_: src.model.BaselineModel
-n_feats: 1024
-fc_hidden: 512
-n_class: 10
+_target_: src.model.Generator
+inp_ch: 80
+out_ch: 256
+kernel_sizes: [16, 16, 8]
+res_k: [3, 5, 7]
+res_dil: [[1, 2], [2, 6], [3, 12]]
