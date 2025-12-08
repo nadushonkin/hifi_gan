@@ -11,6 +11,7 @@ comet_ml
 hydra-core
 yadisk
 librosa
+gdown
 
 black
 isort
