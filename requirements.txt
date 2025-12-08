@@ -1,5 +1,6 @@
-torch==2.2.0
-torchvision==0.17.0
+torch==2.4.1
+torchaudio==2.4.1
+torchvision==0.19.1
 torchmetrics
 numpy==1.26.4
 tqdm
@@ -8,6 +9,8 @@ pandas
 wandb
 comet_ml
 hydra-core
+yadisk
+librosa
 
 black
 isort
