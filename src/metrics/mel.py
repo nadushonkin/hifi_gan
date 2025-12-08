@@ -29,5 +29,10 @@ class Mel_L1(BaseMetric):
             metric (float): calculated metric.
         """
         with torch.no_grad():
+            if real_mel.shape != fake_mel.shape:
+                # Mel specs shape: [B, n_mels, T]
+                min_time = min(real_mel.shape[2], fake_mel.shape[2])
+                real_mel = real_mel[:, :, :min_time]
+                fake_mel = fake_mel[:, :, :min_time]
             loss = F.l1_loss(real_mel, fake_mel).item()
         return loss

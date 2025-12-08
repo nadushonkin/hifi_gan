@@ -1,11 +1,21 @@
 defaults:
-  - model: baseline
   - writer: cometml
   - metrics: example
   - datasets: example
   - dataloader: example
   - transforms: example
   - _self_
+generator:  
+  _target_: src.model.Generator
+  input_channels: 80
+  base_channels: 256
+  kernel_sizes: [16, 16, 8]
+  res_kernels: [3, 5, 7]
+  res_dilations: [[1, 2], [2, 6], [3, 12]]
+msd:
+  _target_: src.model.MultiScaleDiscriminator
+mpd:
+  _target_: src.model.MultiPeriodDiscriminator
 disc_optimizer:
   _target_: torch.optim.AdamW
   lr: 2e-4
@@ -35,6 +45,6 @@ trainer:
   monitor: "max test_MulticlassAccuracy" # "off" or "max/min metric_name", i.e. our goal is to maximize/minimize metric
   save_period: 3 # checkpoint each save_period epochs in addition to the best epoch
   early_stop: ${trainer.n_epochs} # epochs for early stopping
-  save_dir: "saved"
+  save_dir: "/content/drive/MyDrive/saved"
   max_gradient: 400
   seed: 1

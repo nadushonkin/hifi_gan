@@ -35,18 +35,24 @@ class Trainer(BaseTrainer):
             self.disc_optimizer.zero_grad()
             self.gen_optimizer.zero_grad()
 
-        gen_results = self.generator(**batch)
+        gen_results = self.generator(mel_input=batch['real_mel'])
         batch.update(gen_results)
 
         fake_mel_updates = {'fake_mel': self.make_mel(batch['fake'].squeeze(1))}
         batch.update(fake_mel_updates)
 
-        mpd_d_pass = self.mpd(**batch, detach=True)
+        mpd_d_pass = self.mpd(real_audio=batch['real'], fake_audio=batch['fake'], detach=True)
         batch.update(mpd_d_pass)
-        msd_d_pass = self.msd(**batch, detach=True)
+        msd_d_pass = self.msd(real=batch['real'], fake=batch['fake'], detach=True)
         batch.update(msd_d_pass)
 
-        disc_losses = self.disc_loss(**batch)
+        disc_losses = self.disc_loss(
+            mpd_real_out=batch['ans_tp'],
+            mpd_fake_out=batch['ans_fp'],
+            msd_real_out=batch['ans_ts'],
+            msd_fake_out=batch['ans_fs']
+        )
+        disc_losses['disc_loss'] = disc_losses.pop('loss')
         batch.update(disc_losses)
 
         if self.is_train:
@@ -54,12 +60,22 @@ class Trainer(BaseTrainer):
             self._clip_grad_norm()
             self.disc_optimizer.step()
 
-        mpd_g_pass = self.mpd(**batch, detach=False)
+        mpd_g_pass = self.mpd(real_audio=batch['real'], fake_audio=batch['fake'], detach=False)
         batch.update(mpd_g_pass)
-        msd_g_pass = self.msd(**batch, detach=False)
+        msd_g_pass = self.msd(real=batch['real'], fake=batch['fake'], detach=False)
         batch.update(msd_g_pass)
 
-        gen_losses = self.gen_loss(**batch)
+        gen_losses = self.gen_loss(
+            ans_fp=batch['ans_fp'],
+            ans_fs=batch['ans_fs'],
+            feat_tp=batch['feat_tp'],
+            feat_fp=batch['feat_fp'],
+            feat_ts=batch['feat_ts'],
+            feat_fs=batch['feat_fs'],
+            real_mel=batch['real_mel'],
+            fake_mel=batch['fake_mel']
+        )
+        gen_losses['gen_loss'] = gen_losses.pop('loss')
         batch.update(gen_losses)
         
         if self.is_train:
@@ -88,9 +104,14 @@ class Trainer(BaseTrainer):
                 rules to apply.
         """
         # method to log data from you batch
+        # Move tensors to CPU and detach before logging
+        fake_audio = batch['fake'][0].cpu().detach()
+        real_audio = batch['real'][0].cpu().detach()
+        fake_mel = batch['fake_mel'][0].T.cpu().detach()
+        real_mel = batch['real_mel'][0].T.cpu().detach()
         
-        self.writer.add_audio("fake_audio", batch['fake'][0], 22050)
-        self.writer.add_audio("real_audio", batch['real'][0], 22050)
-        self.writer.add_image("fake_mel", batch['fake_mel'][0].T)
-        self.writer.add_image("real_mel", batch['real_mel'][0].T)
+        self.writer.add_audio("fake_audio", fake_audio, 22050)
+        self.writer.add_audio("real_audio", real_audio, 22050)
+        self.writer.add_image("fake_mel", fake_mel)
+        self.writer.add_image("real_mel", real_mel)
 

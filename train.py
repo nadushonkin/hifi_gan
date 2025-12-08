@@ -1,5 +1,9 @@
 import warnings
 
+import os
+os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE" # Optional fix for some Colab/PyTorch environments
+os.environ['MPLBACKEND'] = 'Agg'
+
 import hydra
 import torch
 from hydra.utils import instantiate

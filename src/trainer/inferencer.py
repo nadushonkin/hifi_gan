@@ -119,7 +119,7 @@ class Inferencer(BaseTrainer):
         batch = self.move_batch_to_device(batch)
         batch = self.transform_batch(batch)  # transform batch on device -- faster
 
-        outputs = self.generator(**batch)
+        outputs = self.generator(mel_input=batch['real_mel'])
         batch.update(outputs)
 
         if metrics is not None:
