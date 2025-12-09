@@ -36,7 +36,6 @@ class GeneratorLoss(nn.Module):
         g_loss_component = gen_loss(ans_fp) + gen_loss(ans_fs)
         f_loss_component = feat_loss(feat_tp, feat_fp) + feat_loss(feat_ts, feat_fs)
         
-        # Handle different mel sizes by cropping to minimum size
         if real_mel.shape != fake_mel.shape:
             # Mel spectrograms shape: [B, n_mels, T]
             min_time = min(real_mel.shape[2], fake_mel.shape[2])
