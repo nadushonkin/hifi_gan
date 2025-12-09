@@ -15,7 +15,7 @@ class CustomDirDataset(BaseDataset):
         
         self.transcription_dir = self.root_path / "transcriptions"
         
-        self.audio_dir = Path(audio_dir if audio_dir else self.root_path / 'wavs').resolve()
+        self.audio_dir = Path(audio_dir if audio_dir else self.root_path / 'gt_audio').resolve()
 
         index_data = self._scan_directory()
 
