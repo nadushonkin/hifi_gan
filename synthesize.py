@@ -1,4 +1,9 @@
 import os
+
+os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE" # Optional fix for some Colab/PyTorch environments
+os.environ['MPLBACKEND'] = 'Agg'
+
+import comet_ml
 import warnings
 from pathlib import Path
 import numpy as np
@@ -94,6 +99,8 @@ class InferenceRunner:
         self.writer = None
         if config.inferencer.log:
             project_conf = OmegaConf.to_container(config)
+            if 'trainer' not in project_conf:
+                project_conf['trainer'] = {'epochs': 0}
             self.writer = instantiate(config.writer, None, project_conf)
 
         self.mel_converter = MelSpectrogram(MelSpectrogramConfig())

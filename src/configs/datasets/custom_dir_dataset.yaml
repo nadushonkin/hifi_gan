@@ -1,5 +1,5 @@
 test:
   _target_: src.datasets.CustomDirDataset
   data_dir: "/content/drive/MyDrive/test_data"
-  audio_dir: "/content/drive/MyDrive/test_data/gt_audio"
+  audio_dir: None
   resynthesize: False

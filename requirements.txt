@@ -12,6 +12,7 @@ hydra-core
 yadisk
 librosa
 gdown
+inflect
 
 black
 isort

@@ -38,14 +38,14 @@ class CustomDirDataset(BaseDataset):
             entry = {
                 "id": file_id,
                 "trans": transcription,
-                "audio_path": self.audio_dir / f"{file_id}.wav",
-                "mel_path": None
+                "path": self.audio_dir / f"{file_id}.wav",
+                "mel": None
             }
 
             if not self.resynthesize:
                 mel_path = self.transcription_dir / "mel" / f"{file_id}.npy"
                 if mel_path.exists():
-                    entry["mel_path"] = mel_path
+                    entry["mel"] = torch.from_numpy(np.load(mel_path)).float().squeeze()
 
             dataset_index.append(entry)
 
@@ -62,16 +62,9 @@ class CustomDirDataset(BaseDataset):
         if self.resynthesize:
             audio = self.load_audio(str(entry["audio_path"])).squeeze()
             mel = self.make_mel(audio)
-            
         else:
-            if entry["mel_path"] and entry["mel_path"].exists():
-                mel = torch.from_numpy(np.load(entry["mel_path"])).float().squeeze()
-            else:
-                if entry["audio_path"].exists():
-                     audio = self.load_audio(str(entry["audio_path"])).squeeze()
-            
-            if entry["audio_path"].exists() and audio is None:
-                audio = self.load_audio(str(entry["audio_path"])).squeeze()
+            mel = entry['mel']
+            audio = self.load_audio(str(entry["audio_path"])).squeeze()
 
         result = {
             "id": item_id,
