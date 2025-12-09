@@ -1,0 +1,19 @@
+defaults:
+  - transforms: example
+  - writer: cometml
+  - _self_
+generator:  
+  _target_: src.model.Generator
+  input_channels: 80
+  base_channels: 256
+  kernel_sizes: [16, 16, 8]
+  res_kernels: [3, 5, 7]
+  res_dilations: [[1, 2], [2, 6], [3, 12]]
+inferencer:
+  device_tensors: ["real_mel"] # which tensors should be on device (ex. GPU)
+  device: auto # device name or "auto"
+  save_path: "result" # where to save generated audios
+  seed: 1
+  from_pretrained: "checkpoint-epoch99-29700.pth" # path to the pretrained model
+  log: True # if you want to save results to wandb
+query: "'Hello, world'"

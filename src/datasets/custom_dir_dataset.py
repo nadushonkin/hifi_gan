@@ -15,7 +15,7 @@ class CustomDirDataset(BaseDataset):
         
         self.transcription_dir = self.root_path / "transcriptions"
         
-        self.audio_dir = Path(audio_dir if audio_dir else self.root_path / 'gt_audio').resolve()
+        self.audio_dir = Path(audio_dir if Path(audio_dir).resolve().exists() else self.root_path / 'gt_audio').resolve()
 
         index_data = self._scan_directory()
 
@@ -60,11 +60,11 @@ class CustomDirDataset(BaseDataset):
         mel = None
 
         if self.resynthesize:
-            audio = self.load_audio(str(entry["audio_path"])).squeeze()
+            audio = self.load_audio(str(entry["path"])).squeeze()
             mel = self.make_mel(audio)
         else:
             mel = entry['mel']
-            audio = self.load_audio(str(entry["audio_path"])).squeeze()
+            audio = self.load_audio(str(entry["path"])).squeeze()
 
         result = {
             "id": item_id,
