@@ -544,31 +544,15 @@ class BaseTrainer:
         self.start_epoch = checkpoint["epoch"] + 1
         self.mnt_best = checkpoint["monitor_best"]
 
-        # load architecture params from checkpoint.
-        if checkpoint["config"]["model"] != self.config["model"]:
-            self.logger.warning(
-                "Warning: Architecture configuration given in the config file is different from that "
-                "of the checkpoint. This may yield an exception when state_dict is loaded."
-            )
         self.generator.load_state_dict(checkpoint["gen_state_dict"])
         self.mpd.load_state_dict(checkpoint["mpd_state_dict"])
         self.msd.load_state_dict(checkpoint["msd_state_dict"])
 
-        # load optimizer state from checkpoint only when optimizer type is not changed.
-        if (
-            checkpoint["config"]["optimizer"] != self.config["optimizer"]
-            or checkpoint["config"]["lr_scheduler"] != self.config["lr_scheduler"]
-        ):
-            self.logger.warning(
-                "Warning: Optimizer or lr_scheduler given in the config file is different "
-                "from that of the checkpoint. Optimizer and scheduler parameters "
-                "are not resumed."
-            )
-        else:
-            self.gen_optimizer.load_state_dict(checkpoint["gen_optimizer"])
-            self.gen_lr_scheduler.load_state_dict(checkpoint["gen_lr_scheduler"])
-            self.disc_optimizer.load_state_dict(checkpoint["disc_optimizer"])
-            self.disc_lr_scheduler.load_state_dict(checkpoint["disc_lr_scheduler"])
+        
+        self.gen_optimizer.load_state_dict(checkpoint["gen_optimizer"])
+        self.gen_lr_scheduler.load_state_dict(checkpoint["gen_lr_scheduler"])
+        self.disc_optimizer.load_state_dict(checkpoint["disc_optimizer"])
+        self.disc_lr_scheduler.load_state_dict(checkpoint["disc_lr_scheduler"])
 
         self.logger.info(
             f"Checkpoint loaded. Resume training from epoch {self.start_epoch}"

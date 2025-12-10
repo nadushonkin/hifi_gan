@@ -54,7 +54,11 @@ class CometMLWriter:
                 else:
                     exp_class = comet_ml.ExistingExperiment
 
-                self.exp = exp_class(experiment_key=self.run_id)
+                self.exp = exp_class(
+                    experiment_key=self.run_id,
+                    project_name=project_name,
+                    workspace=workspace
+                )
             else:
                 if mode == "offline":
                     exp_class = comet_ml.OfflineExperiment

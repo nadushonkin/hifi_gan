@@ -28,41 +28,31 @@ This repository contains implementation of [HIFI-GAN](https://arxiv.org/pdf/2010
 
 Installation may depend on your task. The general steps are the following:
 
-0. (Optional) Create and activate new environment using [`conda`](https://conda.io/projects/conda/en/latest/user-guide/getting-started.html) or `venv` ([`+pyenv`](https://github.com/pyenv/pyenv)).
+0. Open Google Colab notebook (yours or `demo.ipynb` from this repo)
 
-   a. `conda` version:
+1. Clone this repo
+```bash
+!git clone https://github.com/nadushonkin/hifi_gan
+```
 
-   ```bash
-   # create env
-   conda create -n project_env python=PYTHON_VERSION
+2. Create and activate new environment in Colab
+```bash
+!pip install -q condacolab
+import condacolab
+condacolab.install()
+```
 
-   # activate env
-   conda activate project_env
-   ```
+```bash
+!conda create -n hifi_env python=3.9 -y -q
+!source /usr/local/etc/profile.d/conda.sh && conda activate hifi_env
+```
 
-   b. `venv` (`+pyenv`) version:
-
-   ```bash
-   # create env
-   ~/.pyenv/versions/PYTHON_VERSION/bin/python3 -m venv project_env
-
-   # alternatively, using default python version
-   python3 -m venv project_env
-
-   # activate env
-   source project_env/bin/activate
-   ```
-
-1. Install all required packages
+3. Install all required packages
 
    ```bash
-   pip install -r requirements.txt
+   !pip install -r /content/hifi_gan/requirements.txt --quiet
    ```
 
-2. Install `pre-commit`:
-   ```bash
-   pre-commit install
-   ```
 
 ## How To Use
 
@@ -71,7 +61,7 @@ To download model checkpoint:
    import gdown
    import os
 
-   url = "https://drive.google.com/file/d/1ibjHvTtlUEMTqVeecTmbjcXOxEr-rYXs/view?usp=sharing"
+   url = "https://drive.google.com/file/d/1pbIsOneIR0LoH85KhxYum98wM2jiZKDv/view?usp=sharing"
 
    output = "model_weights.pth"
 
@@ -84,7 +74,9 @@ To train a model, run the following command:
 python3 train.py -cn=CONFIG_NAME HYDRA_CONFIG_ARGUMENTS
 ```
 
-Where `CONFIG_NAME` is a config from `src/configs` and `HYDRA_CONFIG_ARGUMENTS` are optional arguments.
+Where `CONFIG_NAME` is a config from `src/configs` and `HYDRA_CONFIG_ARGUMENTS` are optional arguments. Note that you need to pass the link to you dataset for training (use arguments datasets.train.data_dir="path_to_your_dataset" and datasets.test.data_dir="path_to_your_dataset")
+If you want to continue training from checkpoint, you can use trainer.resume_from="path to your checkpoint".
+If you want to see info in CometML, modify writer config and don't forget to add `COMET_API_KEY="your_API_key"` to your command
 
 To generate audio from dataset (evaluate the model or save predictions):
 
@@ -114,7 +106,12 @@ COMET_API_KEY="your_API_key" \
                   datasets.test.data_dir="dataset_path" \
                   datasets.test.resynthesize=True
 ```
-You can also look at demo.ipynb in this repo for more details.
+You can also look at `demo.ipynb` in this repo for more details.
+
+## Reports
+You can find the logs for the training of my model from the start of the training [here](https://www.comet.com/nadushonkin/dla-nv/kxrj4xsf3yvzfwxmq4v9kqk0uoywsp6t?compareXAxis=step&experiment-tab=panels&showOutliers=true&smoothing=0&xAxis=step)
+
+Also you can find the **report** [here](https://www.comet.com/nadushonkin/dlanv/reports/NoNUGpvOapUMxpyVxGQCeiMFK)
 
 
 ## Credits
